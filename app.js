@@ -14,7 +14,6 @@ app.use(
       "https://todolist-frontend-react-vite-ui-pro.vercel.app"
     ],
     credentials: true,
-    body: JSON.stringify({ email: emRef.current.value }),
   })
 );
 
