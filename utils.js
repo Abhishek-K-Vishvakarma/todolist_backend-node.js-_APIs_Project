@@ -16,7 +16,7 @@ const sendMails = async (email, otp) => {
           <h2>Your OTP Code</h2>
           <p>Dear user,</p>
           <p>Your OTP for email verification is:</p>
-          <h3 style="color: #007BFF;">${ otp }</h3>
+          <h3 style="color: #007BFF;">${otp}</h3>
           <p>This code will expire in 5 minutes.</p>
           <br/>
           <p>Best regards,<br/>ToDo List App</p>

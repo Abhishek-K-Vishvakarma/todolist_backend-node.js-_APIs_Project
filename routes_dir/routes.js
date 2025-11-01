@@ -12,7 +12,7 @@ routes.get("/getname", GetName);
 routes.put("/editname/:id", EditName);  
 routes.delete("/deletename/:id", DeleteName);
 routes.get("/users", GetAllUsers);
-routes.put("/resend/:id", verifyToken, otpUpdate);
+routes.put("/resend/:id", otpUpdate);
 routes.post("/login", LoginUser);
 routes.delete("/deleteuser/:id", DelUsersById);
 routes.post("/logout", LogoutUser);

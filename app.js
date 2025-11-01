@@ -31,5 +31,5 @@ mongoose
 app.use("/api", routes);
 
 app.listen(process.env.PORT, () => {
-  console.log(`Server running on PORT: http://localhost:${ process.env.PORT }`);
+  console.log(`Server running on PORT: http://localhost:${process.env.PORT}`);
 });
