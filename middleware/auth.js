@@ -11,7 +11,6 @@ const verifyToken = (req, res, next)=>{
     next()
   })
 }
-
 const getUserProfile = (req, res) => {
   res.status(200).json({
     message: "Profile fetched successfully!",

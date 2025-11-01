@@ -13,9 +13,15 @@ app.use(
       "http://localhost:5173",
       "https://todolist-frontend-react-vite-ui-pro.vercel.app"
     ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
   })
 );
+
+app.options("*", cors());
+app.get("/", (req, res) => {
+  res.json({ message: "Server working fine ✅" });
+});
 
 app.use(express.json());
 app.use(cookieParser());
