@@ -10,8 +10,8 @@ const app = express();
 app.use(
   cors({
     origin: [
-      process.env.FRONTENT_LOCALHOST_URL,
-      process.env.SERVER_VERCEL_URL
+      'http://localhost:5173',
+      'https://todolist-frontend-react-vite-ui-pro.vercel.app'
     ],
     credentials: true,
   })
