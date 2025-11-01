@@ -5,12 +5,12 @@ import { verifyToken, getUserProfile }  from "../middleware/auth.js"
 import express from "express";
 const routes = express.Router();
 
-routes.post("/postname", AddName);
+routes.post("/postname", verifyToken, AddName);
 routes.post("/sign", Signup);
 routes.post("/verify", verifyEmail);
-routes.get("/getname", GetName);
-routes.put("/editname/:id", EditName);  
-routes.delete("/deletename/:id", DeleteName);
+routes.get("/getname", verifyToken, GetName);
+routes.put("/editname/:id", verifyToken, EditName);  
+routes.delete("/deletename/:id", verifyToken, DeleteName);
 routes.get("/users", GetAllUsers);
 routes.put("/resend/:id", otpUpdate);
 routes.post("/login", LoginUser);

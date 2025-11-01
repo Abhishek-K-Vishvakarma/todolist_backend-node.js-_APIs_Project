@@ -10,19 +10,34 @@ import nodeMailer from "nodemailer";
 const AddName = async (req, res) => {
   try {
     const { name } = req.body;
-    const userName = await AddingSomething.findOne({ name });
-    if (userName) return res.status(409).json({ message: "This name or any text already exists!" });
-    const newName = new AddingSomething({ name });
-    const saveName = await newName.save();
-    res.status(201).json({ message: "Name or Text adding successfully!", data: { saveName }, status_code: 201, status: true, date_and_time: new Date() });
+    if (!name) {
+      return res.status(400).json({
+        message: "Name or text is required!",
+        status: false
+      });
+    }
+    const existingItem = await AddingSomething.findOne({ name, userId: req.user._id });
+    if (existingItem) {
+      return res.status(409).json({
+        message: "This name or text already exists in your list!",
+        status: false
+      });
+    }
+    const newItem = new AddingSomething({ name, userId: req.user._id, });
+    const savedItem = await newItem.save();
+    res.status(201).json({ message: "Name or text added successfully!", data: savedItem, status_code: 201, status: true, date_and_time: new Date() });
   } catch (err) {
-    res.status(500).json({ message: "Internal Server Error", err });
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: err.message,
+      status: false,
+    });
   }
 };
 
 const GetName = async (req, res) => {
   try {
-    const findAllName = await AddingSomething.find({});
+    const findAllName = await AddingSomething.find({ userId: req.user._id });
     res.status(200).json({ message: "All names geting!", findAllName });
   } catch (err) {
     res.status(500).json({ message: "Internal Server Error", err });
@@ -32,22 +47,61 @@ const GetName = async (req, res) => {
 const EditName = async (req, res) => {
   try {
     const id = req.params.id;
-    const edit = await AddingSomething.findByIdAndUpdate(id, { $set: req.body }, { new: true });
-    res.status(200).json({ message: "Name Updated Success!", edit, status_code: 200, status: true });
+
+    const updatedItem = await AddingSomething.findOneAndUpdate(
+      { _id: id, userId: req.user._id },
+      { $set: req.body },
+      { new: true }
+    );
+    if (!updatedItem) {
+      return res.status(404).json({
+        message: "Item not found or you are not authorized to edit it!",
+        status: false,
+      });
+    }
+    res.status(200).json({
+      message: "Name updated successfully!",
+      data: updatedItem,
+      status_code: 200,
+      status: true,
+    });
   } catch (err) {
-    res.status(500).json({ message: "Internal Server Error", err });
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: err.message,
+    });
   }
 }
 
 const DeleteName = async (req, res) => {
   try {
     const id = req.params.id;
-    await AddingSomething.findByIdAndDelete(id);
-    res.status(200).json({ message: "Name Deleted Success!", status_code: 204, status: true });
+
+    const deletedItem = await AddingSomething.findOneAndDelete({
+      _id: id,
+      userId: req.user._id,
+    });
+
+    if (!deletedItem) {
+      return res.status(404).json({
+        message: "Item not found or you are not authorized to delete it!",
+        status: false,
+      });
+    }
+
+    res.status(200).json({
+      message: "Item deleted successfully!",
+      status: true,
+      status_code: 200,
+    });
   } catch (err) {
-    res.status(500).json({ message: "Internal Server Error", err });
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: err.message,
+    });
   }
-}
+};
+
 
 const Signup = async (req, res) => {
   try {
@@ -194,63 +248,63 @@ const otpUpdate = async (req, res) => {
   }
 };
 
-
-
 const ForgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: "User not found!" });
-    const token = crypto.randomBytes(32).toString("hex");
-    const resetToken = crypto.createHash("sha256").update(token).digest("hex");
-    user.token = resetToken;
+    if (!user)
+    return res.status(404).json({ message: "No user found with this email!" });
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+    user.resetPasswordToken = hashedToken;
+    user.resetPasswordExpires = Date.now() + 5 * 60 * 1000;
     await user.save();
-    const resetTokenURL = `http://localhost:5173/reset-password/${token}`;
+    const resetUrl = `${ process.env.SERVER_VERCEL_URL}/reset-password/${resetToken}`;
     const transporter = nodeMailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL,
-        pass: process.env.EMAIL_PASS
-      }
+        pass: process.env.GMAIL_APP_PASSWORD,
+      },
     });
-    const mailOptions = {
+
+    await transporter.sendMail({
       from: process.env.EMAIL,
       to: user.email,
-      subject: 'Password Reset Request',
+      subject: "Password Reset Request",
       html: `
-        <h3>Hello ${ user.name },</h3>
-        <p>You requested to reset your password. Click the link below to set a new password:</p>
-        <a href="${ resetTokenURL }">${ resetTokenURL }</a>
-        <p>If you didn't request this, please ignore this email.</p>
+        <p>Hello ${ user.name },</p>
+        <p>Click below to reset your password:</p>
+        <a href="${ resetUrl }">${ resetUrl }</a>
+        <p>This link will expire in 15 minutes.</p>
       `,
-    };
-    await transporter.sendMail(mailOptions);
-    await user.save();
-    res.status(200).json({ message: "Reset link sent to email", resetToken: token});
+    });
+
+    res.status(200).json({ message: "Password reset email sent successfully!" });
   } catch (err) {
-    res.status(500).json({ message: "Internal Server Error", err });
+    res.status(500).json({ message: "Internal server error", error: err.message });
   }
 }
 
 const ResetPassword = async (req, res) => {
   try {
-    const { password } = req.body;
     const { token } = req.params;
+    const { password } = req.body;
     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
-    const user = await User.findOne({ token: hashedToken });
-    if (!user) {
-      return res.status(400).json({ message: "Invalid or expired token" });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    user.password = hashedPassword;
-    user.token = null;
-
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+    if (!user)
+      return res.status(400).json({ message: "Invalid or expired reset token!" });
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(password, salt);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
     await user.save();
-
-    return res.status(200).json({ message: "Password reset successful" }); 
+    res.status(200).json({ message: "Password has been reset successfully!" });
   } catch (err) {
-    return res.status(500).json({ message: "Internal Server error", err });
+    res.status(500).json({ message: "Internal server error", error: err.message });
   }
 };
 

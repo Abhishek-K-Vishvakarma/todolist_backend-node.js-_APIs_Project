@@ -11,7 +11,9 @@ const SignUpSchema = new mongoose.Schema(
     otp: { type: String },
     otpExpiresAt: { type: Date, expires: '5m' },
     isVerified: { type: Boolean, default: false },
-    token : {type: String}
+    token : {type: String},
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
   },
   { timestamps: true }
 );
