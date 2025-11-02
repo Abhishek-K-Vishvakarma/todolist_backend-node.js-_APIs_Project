@@ -8,30 +8,44 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import nodeMailer from "nodemailer";
 
-const AddName = async (req, res) => {
+ const AddName = async (req, res) => {
   try {
     const { name } = req.body;
     const userId = req.user._id;
+
     if (!name) {
-      return res.status(400).json({ message: "Name is required!" });
+      return res.status(400).json({
+        message: "Name is required!",
+        status: false,
+      });
     }
+
     const existingItem = await AddingSomething.findOne({ name, userId });
     if (existingItem) {
-      return res.status(400).json({ message: "This name already exists in your list!" });
+      return res.status(400).json({
+        message: "This name already exists in your list!",
+        status: false,
+      });
     }
     const newItem = new AddingSomething({ name, userId });
     const savedItem = await newItem.save();
+
     res.status(201).json({
       message: "Item added successfully!",
       data: savedItem,
-      status_code: 201,
       status: true,
+      status_code: 201,
       date_and_time: new Date(),
     });
+
   } catch (err) {
     if (err.code === 11000) {
-      return res.status(400).json({ message: "Duplicate name for this user!" });
+      return res.status(400).json({
+        message: "Duplicate name for this user!",
+        status: false,
+      });
     }
+
     res.status(500).json({
       message: "Internal Server Error",
       error: err.message,
