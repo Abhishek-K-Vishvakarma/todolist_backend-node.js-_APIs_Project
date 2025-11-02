@@ -12,5 +12,4 @@ const AddingSomethingSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-AddingSomethingSchema.index({ name: 1, userId: 1 }, { unique: true });
 export default mongoose.model("AddingSomething", AddingSomethingSchema);
