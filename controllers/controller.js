@@ -176,7 +176,7 @@ const LoginUser = async (req, res) => {
     if (user.isVerified == false) return res.status(400).json({ message: "Please verify email via otp!" });
     const compare = await bcrypt.compare(password, user.password);
     if (!compare) return res.status(400).json({ message: "Password does not matched!" });
-    const token = jwt.sign({ _id: user.id, name: user.name, email: user.email, role: user.role}, process.env.SECRET_KEY, { expiresIn: '1h' });
+    const token = jwt.sign({ _id: user.id, name: user.name, email: user.email, role: user.role, gender: user.gender, token : user.token}, process.env.SECRET_KEY, { expiresIn: '1h' });
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
