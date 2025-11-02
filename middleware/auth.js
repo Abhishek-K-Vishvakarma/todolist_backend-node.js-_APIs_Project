@@ -24,6 +24,7 @@ export const verifyToken = (req, res, next) => {
   }
 };
 
+
 export const getUserProfile = (req, res) => {
   return res.status(200).json({
     message: "Profile fetched successfully!",

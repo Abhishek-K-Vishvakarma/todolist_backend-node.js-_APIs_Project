@@ -11,23 +11,27 @@ import nodeMailer from "nodemailer";
 const AddName = async (req, res) => {
   try {
     const { name } = req.body;
+    const userId = req.user._id;
     if (!name) {
-      return res.status(400).json({
-        message: "Name or text is required!",
-        status: false
-      });
+      return res.status(400).json({ message: "Name is required!" });
     }
-    const existingItem = await AddingSomething.findOne({ name, userId: req.user._id });
+    const existingItem = await AddingSomething.findOne({ name, userId });
     if (existingItem) {
-      return res.status(409).json({
-        message: "This name or text already exists in your list!",
-        status: false
-      });
+      return res.status(400).json({ message: "This name already exists in your list!" });
     }
-    const newItem = new AddingSomething({ name, userId: req.user._id, });
+    const newItem = new AddingSomething({ name, userId });
     const savedItem = await newItem.save();
-    res.status(201).json({ message: "Name or text added successfully!", data: savedItem, status_code: 201, status: true, date_and_time: new Date() });
+    res.status(201).json({
+      message: "Item added successfully!",
+      data: savedItem,
+      status_code: 201,
+      status: true,
+      date_and_time: new Date(),
+    });
   } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({ message: "Duplicate name for this user!" });
+    }
     res.status(500).json({
       message: "Internal Server Error",
       error: err.message,
@@ -35,6 +39,7 @@ const AddName = async (req, res) => {
     });
   }
 };
+
 
 const GetName = async (req, res) => {
   try {
