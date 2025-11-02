@@ -1,6 +1,6 @@
 import { AddName, GetName, EditName, DeleteName, Signup, verifyEmail, 
   GetAllUsers, otpUpdate, LoginUser, DelUsersById, LogoutUser, EditUser,
-  ForgotPassword, ResetPassword } from "../controllers/controller.js";
+  ForgotPassword, ResetPassword, getTokenUser } from "../controllers/controller.js";
 import { verifyToken, getUserProfile }  from "../middleware/auth.js"
 import express from "express";
 const routes = express.Router();
@@ -20,5 +20,6 @@ routes.get("/profile", verifyToken, getUserProfile);
 routes.put("/edituser/:id", verifyToken, EditUser);
 routes.post("/forgot-password", ForgotPassword);
 routes.post("/reset-password/:token", ResetPassword);
+routes.get("/token", getTokenUser);
 
 export default routes;

@@ -7,6 +7,7 @@ import otpGenerate from "otp-generator";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import nodeMailer from "nodemailer";
+
 const AddName = async (req, res) => {
   try {
     const { name } = req.body;
@@ -176,7 +177,7 @@ const LoginUser = async (req, res) => {
     if (user.isVerified == false) return res.status(400).json({ message: "Please verify email via otp!" });
     const compare = await bcrypt.compare(password, user.password);
     if (!compare) return res.status(400).json({ message: "Password does not matched!" });
-    const token = jwt.sign({ _id: user.id, name: user.name, email: user.email, role: user.role, gender: user.gender}, process.env.SECRET_KEY, { expiresIn: '1h' });
+    const token = jwt.sign({ _id: user.id, name: user.name, email: user.email, role: user.role, gender: user.gender }, process.env.SECRET_KEY, { expiresIn: '1h' });
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -199,6 +200,33 @@ const LogoutUser = (req, res) => {
   res.status(200).json({ message: "Logout successful!" });
 };
 
+const getTokenUser = async (req, res) => {
+  try {
+    const token = req.cookies?.token || req.headers.authorization?.split(" ")[1];
+    if (!token) {
+      return res
+        .status(401)
+        .json({ message: "Token not found in cookies or header", status_code: 401 });
+    }
+    const decoded = jwt.verify(token, process.env.SECRET_KEY);
+    const user = await User.findById(decoded._id).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found", status_code: 404 });
+    }
+    res.status(200).json({
+      message: "Token verified successfully",
+      status_code: 200,
+      user,
+      token,
+    });
+  } catch (err) {
+    res.status(401).json({
+      message: "Invalid or expired token",
+      status_code: 401,
+      error: err.message,
+    });
+  }
+}
 
 const GetAllUsers = async (req, res) => {
   try {
@@ -253,13 +281,13 @@ const ForgotPassword = async (req, res) => {
     const { email } = req.body;
     const user = await User.findOne({ email });
     if (!user)
-    return res.status(404).json({ message: "No user found with this email!" });
+      return res.status(404).json({ message: "No user found with this email!" });
     const resetToken = crypto.randomBytes(32).toString("hex");
     const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
     user.resetPasswordToken = hashedToken;
     user.resetPasswordExpires = Date.now() + 5 * 60 * 1000;
     await user.save();
-    const resetUrl = `${ process.env.SERVER_VERCEL_URL}/reset-password/${resetToken}`;
+    const resetUrl = `${ process.env.SERVER_VERCEL_URL }/reset-password/${ resetToken }`;
     const transporter = nodeMailer.createTransport({
       service: 'gmail',
       auth: {
@@ -312,5 +340,5 @@ const ResetPassword = async (req, res) => {
 export {
   AddName, GetName, EditName, DeleteName, Signup, verifyEmail,
   GetAllUsers, otpUpdate, LoginUser, DelUsersById, LogoutUser, EditUser,
-  ForgotPassword, ResetPassword
+  ForgotPassword, ResetPassword, getTokenUser
 };
