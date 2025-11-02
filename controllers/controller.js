@@ -67,60 +67,148 @@ const GetName = async (req, res) => {
   }
 }
 
+// const EditName = async (req, res) => {
+//   try {
+//     const id = req.params.id;
+
+//     const updatedItem = await AddingSomething.findOneAndUpdate(
+//       { _id: id, userId: req.user._id },
+//       { $set: req.body },
+//       { new: true }
+//     );
+//     if (!updatedItem) {
+//       return res.status(404).json({
+//         message: "Item not found or you are not authorized to edit it!",
+//         status: false,
+//       });
+//     }
+//     res.status(200).json({
+//       message: "Name updated successfully!",
+//       data: updatedItem,
+//       status_code: 200,
+//       status: true,
+//     });
+//   } catch (err) {
+//     res.status(500).json({
+//       message: "Internal Server Error",
+//       error: err.message,
+//     });
+//   }
+// }
+
 const EditName = async (req, res) => {
   try {
-    const id = req.params.id;
+    const userId = req.user._id; // from verifyToken middleware
+    const itemId = req.params.id; // id of the list item to edit
+    const { name } = req.body; // new name
 
-    const updatedItem = await AddingSomething.findOneAndUpdate(
-      { _id: id, userId: req.user._id },
-      { $set: req.body },
-      { new: true }
-    );
-    if (!updatedItem) {
+    if (!name) {
+      return res.status(400).json({
+        message: "Name is required!",
+        status: false,
+      });
+    }
+
+    // Find the user's list
+    const userList = await AddingSomething.findOne({ userId });
+    if (!userList) {
+      return res.status(404).json({
+        message: "User list not found!",
+        status: false,
+      });
+    }
+    const item = userList.list.find((item) => item._id.toString() === itemId);
+    if (!item) {
       return res.status(404).json({
         message: "Item not found or you are not authorized to edit it!",
         status: false,
       });
     }
-    res.status(200).json({
-      message: "Name updated successfully!",
-      data: updatedItem,
-      status_code: 200,
-      status: true,
-    });
-  } catch (err) {
-    res.status(500).json({
-      message: "Internal Server Error",
-      error: err.message,
-    });
-  }
-}
-
-const DeleteName = async (req, res) => {
-  try {
-    const id = req.params.id;
-
-    const deletedItem = await AddingSomething.findOneAndDelete({
-      _id: id,
-      userId: req.user._id,
-    });
-
-    if (!deletedItem) {
-      return res.status(404).json({
-        message: "Item not found or you are not authorized to delete it!",
+    const duplicate = userList.list.find(
+      (item) => item.name === name && item._id.toString() !== itemId
+    );
+    if (duplicate) {
+      return res.status(400).json({
+        message: "This name already exists in your list!",
         status: false,
       });
     }
-
+    item.name = name;
+    const updatedList = await userList.save();
     res.status(200).json({
-      message: "Item deleted successfully!",
-      status: true,
+      message: "Name updated successfully!",
+      data: updatedList,
       status_code: 200,
+      status: true,
     });
   } catch (err) {
+    console.error("Edit error:", err);
     res.status(500).json({
       message: "Internal Server Error",
       error: err.message,
+      status: false,
+    });
+  }
+};
+
+// const DeleteName = async (req, res) => {
+//   try {
+//     const id = req.params.id;
+
+//     const deletedItem = await AddingSomething.findOneAndDelete({
+//       _id: id,
+//       userId: req.user._id,
+//     });
+
+//     if (!deletedItem) {
+//       return res.status(404).json({
+//         message: "Item not found or you are not authorized to delete it!",
+//         status: false,
+//       });
+//     }
+
+//     res.status(200).json({
+//       message: "Item deleted successfully!",
+//       status: true,
+//       status_code: 200,
+//     });
+//   } catch (err) {
+//     res.status(500).json({
+//       message: "Internal Server Error",
+//       error: err.message,
+//     });
+//   }
+// };
+
+const DeleteName = async (req, res) => {
+  try {
+    const userId = req.user._id; // from verifyToken middleware
+    const itemId = req.params.id; // item id inside list array
+    const userList = await AddingSomething.findOne({ userId });
+    if (!userList) {
+      return res.status(404).json({ message: "User list not found!", status: false });
+    }
+    const itemIndex = userList.list.findIndex((item) => item._id.toString() === itemId);
+    if (itemIndex === -1) {
+      return res.status(404).json({ message: "Item not found or you are not authorized to delete it!", status: false });
+    }
+
+    // Remove the item from the list
+    userList.list.splice(itemIndex, 1);
+
+    // Save the updated list
+    await userList.save();
+    res.status(200).json({
+      message: "Item deleted successfully!",
+      status: true,
+      updatedList: userList.list,
+    });
+  } catch (err) {
+    console.error("Delete error:", err);
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: err.message,
+      status: false,
     });
   }
 };
