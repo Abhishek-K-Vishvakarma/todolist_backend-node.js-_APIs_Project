@@ -285,9 +285,10 @@ const ForgotPassword = async (req, res) => {
     const resetToken = crypto.randomBytes(32).toString("hex");
     const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
     user.resetPasswordToken = hashedToken;
+    user.token = resetToken;
     user.resetPasswordExpires = Date.now() + 5 * 60 * 1000;
     await user.save();
-    const resetUrl = `${ process.env.SERVER_VERCEL_URL }/reset-password/${ resetToken }`;
+    const resetUrl = `https://todolist-frontend-react-vite-ui-pro.vercel.app/reset-password/${resetToken}`;
     const transporter = nodeMailer.createTransport({
       service: 'gmail',
       auth: {
@@ -307,8 +308,7 @@ const ForgotPassword = async (req, res) => {
         <p>This link will expire in 15 minutes.</p>
       `,
     });
-
-    res.status(200).json({ message: "Password reset email sent successfully!" });
+    res.status(200).json({ message: "Password reset email sent successfully!", token: resetToken });
   } catch (err) {
     res.status(500).json({ message: "Internal server error", error: err.message });
   }
