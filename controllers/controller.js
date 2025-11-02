@@ -280,34 +280,33 @@ const ForgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email });
-    if (!user)
-      return res.status(404).json({ message: "No user found with this email!" });
+    if (!user) return res.status(404).json({ message: "No user found with this email!" });
     const resetToken = crypto.randomBytes(32).toString("hex");
     const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
     user.resetPasswordToken = hashedToken;
     user.token = resetToken;
     user.resetPasswordExpires = Date.now() + 5 * 60 * 1000;
     await user.save();
-    const resetUrl = `https://todolist-frontend-react-vite-ui-pro.vercel.app/reset-password/${resetToken}`;
-    const transporter = nodeMailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL,
-        pass: process.env.GMAIL_APP_PASSWORD,
-      },
-    });
+    // const resetUrl = `https://todolist-frontend-react-vite-ui-pro.vercel.app/reset-password/${resetToken}`;
+    // const transporter = nodeMailer.createTransport({
+    //   service: 'gmail',
+    //   auth: {
+    //     user: process.env.EMAIL,
+    //     pass: process.env.GMAIL_APP_PASSWORD,
+    //   },
+    // });
 
-    await transporter.sendMail({
-      from: process.env.EMAIL,
-      to: user.email,
-      subject: "Password Reset Request",
-      html: `
-        <p>Hello ${ user.name },</p>
-        <p>Click below to reset your password:</p>
-        <a href="${ resetUrl }">${ resetUrl }</a>
-        <p>This link will expire in 15 minutes.</p>
-      `,
-    });
+    // await transporter.sendMail({
+    //   from: process.env.EMAIL,
+    //   to: user.email,
+    //   subject: "Password Reset Request",
+    //   html: `
+    //     <p>Hello ${ user.name },</p>
+    //     <p>Click below to reset your password:</p>
+    //     <a href="${ resetUrl }">${ resetUrl }</a>
+    //     <p>This link will expire in 15 minutes.</p>
+    //   `,
+    // });
     res.status(200).json({ message: "Password reset email sent successfully!", token: resetToken });
   } catch (err) {
     res.status(500).json({ message: "Internal server error", error: err.message });
