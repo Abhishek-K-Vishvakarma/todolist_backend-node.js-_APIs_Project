@@ -11,13 +11,23 @@ import nodeMailer from "nodemailer";
  const AddName = async (req, res) => {
   try {
     const { name } = req.body;
+    const userId = req.user._id; 
+
     if (!name) {
       return res.status(400).json({
         message: "Name is required!",
         status: false,
       });
     }
-    const newItem = new AddingSomething({ name });
+
+    const existingItem = await AddingSomething.findOne({ name, userId });
+    if (existingItem) {
+      return res.status(400).json({
+        message: "This name already exists in your list!",
+        status: false,
+      });
+    }
+    const newItem = new AddingSomething({ name, userId });
     const savedItem = await newItem.save();
     res.status(201).json({
       message: "Item added successfully!",
@@ -28,6 +38,13 @@ import nodeMailer from "nodemailer";
     });
 
   } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({
+        message: "Duplicate name for this user!",
+        status: false,
+      });
+    }
+
     res.status(500).json({
       message: "Internal Server Error",
       error: err.message,
