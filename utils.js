@@ -3,17 +3,17 @@ import dotenv from "dotenv";
 dotenv.config();
 const sendMails = (email, otp) => {
   const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,                // TLS port
-    secure: false,
-    // service: "gmail",
+    // host: "smtp.gmail.com",
+    // port: 587,
+    // secure: false,
+    service: "gmail",
     auth: {
       user: process.env.EMAIL,
       pass: process.env.GMAIL_APP_PASSWORD
     },
-    tls: {
-      rejectUnauthorized: false,  // allow self-signed certificates
-    },
+    // tls: {
+    //   rejectUnauthorized: false,
+    // },
   })
   const mailOptions = {
     from: process.env.EMAIL,
@@ -29,5 +29,4 @@ const sendMails = (email, otp) => {
     }
   });
 }
-
 export default sendMails;
