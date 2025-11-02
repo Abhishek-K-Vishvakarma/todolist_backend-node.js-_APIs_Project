@@ -7,18 +7,19 @@ import cookieParser from "cookie-parser";
 
 dotenv.config();
 const app = express();
+app.use(express.json());
+app.use(cookieParser());
+
 app.use(
   cors({
     origin: [
-      'http://localhost:5173',
-      'https://todolist-frontend-react-vite-ui-pro.vercel.app'
+      "http://localhost:5173", 
+      "http://localhost:5174", 
+      "https://todolist-frontend-react-vite-ui-pro.vercel.app",
     ],
     credentials: true,
   })
 );
-
-app.use(express.json());
-app.use(cookieParser());
 mongoose.connect(process.env.MONGO_URL, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -27,5 +28,5 @@ mongoose.connect(process.env.MONGO_URL, {
 app.use("/api", routes);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on PORT: http://localhost:${ PORT }`);
+  console.log(`Server running on PORT: http://localhost:${PORT}`);
 });

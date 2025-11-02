@@ -8,11 +8,10 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import nodeMailer from "nodemailer";
 
-const AddName = async (req, res) => {
+ const AddName = async (req, res) => {
   try {
     const { name } = req.body;
     const userId = req.user._id;
-
     if (!name) {
       return res.status(400).json({
         message: "Name is required!",
@@ -38,6 +37,7 @@ const AddName = async (req, res) => {
           status: false,
         });
       }
+
       userList.list.push({ name });
     }
     const savedList = await userList.save();
