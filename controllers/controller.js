@@ -12,9 +12,9 @@ const AddName = async (req, res) => {
   try {
     const { name } = req.body;
     const userId = req.user._id;
-    if(!name) return res.status(400).json({message: "Name is required!", status: false});
+    if (!name) return res.status(400).json({ message: "Name is required!", status: false });
     const user = await User.findById(userId);
-    if(!user) res.status(404).json({message: "User not found!", status: false});
+    if (!user) res.status(404).json({ message: "User not found!", status: false });
     let userList = await AddingSomething.findOne({ userId });
 
     if (!userList) {
@@ -41,7 +41,7 @@ const AddName = async (req, res) => {
       status_code: 201,
       date_and_time: new Date(),
     });
-  }catch(err){
+  } catch (err) {
     res.status(500).json({ message: "Internal Server Error", err });
   }
 };
@@ -292,24 +292,17 @@ const verifyEmail = async (req, res) => {
 const LoginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    // 🔍 Check user existence
     const user = await User.findOne({ email });
     if (!user)
       return res.status(400).json({ message: "User email not found!" });
-
-    // 🔐 Verify email status
     if (!user.isVerified)
       return res
         .status(400)
         .json({ message: "Please verify email via OTP first!" });
 
-    // 🔑 Check password
     const compare = await bcrypt.compare(password, user.password);
     if (!compare)
       return res.status(400).json({ message: "Password does not match!" });
-
-    // 🎫 Generate new token
     const token = jwt.sign(
       {
         _id: user._id,
@@ -330,11 +323,8 @@ const LoginUser = async (req, res) => {
       maxAge: 60 * 60 * 1000, // 1 hour
     });
 
-    // ✅ Save token to DB (IMPORTANT!)
     user.token = token;
     await user.save();
-
-    // ✅ Response
     res.status(200).json({
       message: "Login successful!",
       login: {
@@ -441,38 +431,21 @@ const ForgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: "No user found with this email!" });
+    if (!user)
+      return res.status(404).json({ message: "No user found with this email!" });
     const resetToken = crypto.randomBytes(32).toString("hex");
     const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
     user.resetPasswordToken = hashedToken;
-    user.token = resetToken;
-    user.resetPasswordExpires = Date.now() + 5 * 60 * 1000;
+    user.resetPasswordExpires = Date.now() + 5 * 60 * 1000; // 5 minutes expiry
     await user.save();
-    // const resetUrl = `https://todolist-frontend-react-vite-ui-pro.vercel.app/reset-password/${resetToken}`;
-    // const transporter = nodeMailer.createTransport({
-    //   service: 'gmail',
-    //   auth: {
-    //     user: process.env.EMAIL,
-    //     pass: process.env.GMAIL_APP_PASSWORD,
-    //   },
-    // });
-
-    // await transporter.sendMail({
-    //   from: process.env.EMAIL,
-    //   to: user.email,
-    //   subject: "Password Reset Request",
-    //   html: `
-    //     <p>Hello ${ user.name },</p>
-    //     <p>Click below to reset your password:</p>
-    //     <a href="${ resetUrl }">${ resetUrl }</a>
-    //     <p>This link will expire in 15 minutes.</p>
-    //   `,
-    // });
-    res.status(200).json({ message: "Password reset email sent successfully!", token: resetToken });
+    res.status(200).json({
+      message: "Password reset token generated successfully!",
+      resetToken,
+    });
   } catch (err) {
     res.status(500).json({ message: "Internal server error", error: err.message });
   }
-}
+};
 
 const ResetPassword = async (req, res) => {
   try {
@@ -483,6 +456,7 @@ const ResetPassword = async (req, res) => {
       resetPasswordToken: hashedToken,
       resetPasswordExpires: { $gt: Date.now() },
     });
+
     if (!user)
       return res.status(400).json({ message: "Invalid or expired reset token!" });
     const salt = await bcrypt.genSalt(10);
@@ -490,7 +464,7 @@ const ResetPassword = async (req, res) => {
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     await user.save();
-    res.status(200).json({ message: "Password has been reset successfully!" });
+    res.status(200).json({ message: "Password reset successfully!" });
   } catch (err) {
     res.status(500).json({ message: "Internal server error", error: err.message });
   }
