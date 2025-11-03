@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
-
-export const verifyToken = (req, res, next) => {
+import User from "../schema_model/user.js"
+export const verifyToken = async(req, res, next) => {
   try {
     const token = req.cookies?.token;
     if (!token) {
@@ -10,6 +10,14 @@ export const verifyToken = (req, res, next) => {
       });
     }
     const decoded = jwt.verify(token, process.env.SECRET_KEY);
+    // const user = await User.findById(decoded.id);
+    // if (!user) {
+    //   return res.status(404).json({
+    //     message: "User not found!",
+    //     status_code: 404,
+    //   });
+    // }
+
     req.user = decoded;
     next();
   } catch (err) {

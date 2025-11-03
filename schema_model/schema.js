@@ -8,7 +8,7 @@ const AddingSomethingSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-    userName: { type: String, required: true },
+    name: { type: String, required: true },
     list: [
       {
         name: { type: String, required: true },

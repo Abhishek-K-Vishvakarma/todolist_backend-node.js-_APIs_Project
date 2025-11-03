@@ -8,10 +8,11 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import nodeMailer from "nodemailer";
 
- const AddName = async (req, res) => {
+const AddName = async (req, res) => {
   try {
     const { name } = req.body;
     const userId = req.user._id;
+
     if (!name) {
       return res.status(400).json({
         message: "Name is required!",
@@ -19,9 +20,14 @@ import nodeMailer from "nodemailer";
       });
     }
     const user = await User.findById(userId);
+    console.log(user, userId)
     if (!user) {
-      return res.status(404).json({ message: "User not found!", status: false });
+      return res.status(404).json({
+        message: "User not found!",
+        status: false,
+      });
     }
+
     let userList = await AddingSomething.findOne({ userId });
     if (!userList) {
       userList = new AddingSomething({
@@ -38,9 +44,13 @@ import nodeMailer from "nodemailer";
         });
       }
 
+      // ➕ Add new item
       userList.list.push({ name });
     }
+
+    // 💾 Save document
     const savedList = await userList.save();
+
     res.status(201).json({
       message: "Item added successfully!",
       data: savedList,
@@ -56,7 +66,6 @@ import nodeMailer from "nodemailer";
     });
   }
 };
-
 
 const GetName = async (req, res) => {
   try {
