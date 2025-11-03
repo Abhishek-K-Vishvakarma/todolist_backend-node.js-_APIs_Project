@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import User from "../schema_model/user.js"
 export const verifyToken = async(req, res, next) => {
   try {
-    const token = req.cookies?.token;
+    let token = req.cookies?.token || (req.headers.authorization && req.headers.authorization.split(" ")[1]);
     if (!token) {
       return res.status(401).json({
         message: "Not authenticated! Token missing.",
@@ -10,14 +10,6 @@ export const verifyToken = async(req, res, next) => {
       });
     }
     const decoded = jwt.verify(token, process.env.SECRET_KEY);
-    // const user = await User.findById(decoded.id);
-    // if (!user) {
-    //   return res.status(404).json({
-    //     message: "User not found!",
-    //     status_code: 404,
-    //   });
-    // }
-
     req.user = decoded;
     next();
   } catch (err) {
@@ -31,8 +23,6 @@ export const verifyToken = async(req, res, next) => {
     });
   }
 };
-
-
 export const getUserProfile = (req, res) => {
   return res.status(200).json({
     message: "Profile fetched successfully!",
