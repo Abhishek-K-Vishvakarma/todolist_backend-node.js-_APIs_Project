@@ -12,27 +12,15 @@ const AddName = async (req, res) => {
   try {
     const { name } = req.body;
     const userId = req.user._id;
-
-    if (!name) {
-      return res.status(400).json({
-        message: "Name is required!",
-        status: false,
-      });
-    }
+    if(!name) return res.status(400).json({message: "Name is required!", status: false});
     const user = await User.findById(userId);
-    console.log(user, userId)
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found!",
-        status: false,
-      });
-    }
-
+    if(!user) res.status(404).json({message: "User not found!", status: false});
     let userList = await AddingSomething.findOne({ userId });
+
     if (!userList) {
       userList = new AddingSomething({
         userId,
-        userName: user.name,
+        name: user.name,
         list: [{ name }],
       });
     } else {
@@ -43,14 +31,9 @@ const AddName = async (req, res) => {
           status: false,
         });
       }
-
-      // ➕ Add new item
       userList.list.push({ name });
     }
-
-    // 💾 Save document
     const savedList = await userList.save();
-
     res.status(201).json({
       message: "Item added successfully!",
       data: savedList,
@@ -58,12 +41,8 @@ const AddName = async (req, res) => {
       status_code: 201,
       date_and_time: new Date(),
     });
-  } catch (err) {
-    res.status(500).json({
-      message: "Internal Server Error",
-      error: err.message,
-      status: false,
-    });
+  }catch(err){
+    res.status(500).json({ message: "Internal Server Error", err });
   }
 };
 
@@ -288,27 +267,90 @@ const verifyEmail = async (req, res) => {
   }
 };
 
+// const LoginUser = async (req, res) => {
+//   try {
+//     const { email, password } = req.body;
+//     const user = await User.findOne({ email });
+//     if (!user) res.status(400).json({ message: "User email not found!" });
+//     if (user.isVerified == false) return res.status(400).json({ message: "Please verify email via otp!" });
+//     const compare = await bcrypt.compare(password, user.password);
+//     if (!compare) return res.status(400).json({ message: "Password does not matched!" });
+//     const token = jwt.sign({ _id: user.id, name: user.name, email: user.email, role: user.role, gender: user.gender }, process.env.SECRET_KEY, { expiresIn: '1h' });
+//     res.cookie("token", token, {
+//       httpOnly: true,
+//       secure: process.env.NODE_ENV === "production",
+//       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+//       maxAge: 60 * 60 * 1000,
+//     });
+
+//     res.status(200).json({ message: "Login successful!", login: { _id: user._id, email: user.email, token: token } });
+//   } catch (err) {
+//     res.status(500).json({ message: "Internal Server Error :", err });
+//   }
+// }
+
 const LoginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    // 🔍 Check user existence
     const user = await User.findOne({ email });
-    if (!user) res.status(400).json({ message: "User email not found!" });
-    if (user.isVerified == false) return res.status(400).json({ message: "Please verify email via otp!" });
+    if (!user)
+      return res.status(400).json({ message: "User email not found!" });
+
+    // 🔐 Verify email status
+    if (!user.isVerified)
+      return res
+        .status(400)
+        .json({ message: "Please verify email via OTP first!" });
+
+    // 🔑 Check password
     const compare = await bcrypt.compare(password, user.password);
-    if (!compare) return res.status(400).json({ message: "Password does not matched!" });
-    const token = jwt.sign({ _id: user.id, name: user.name, email: user.email, role: user.role, gender: user.gender }, process.env.SECRET_KEY, { expiresIn: '1h' });
+    if (!compare)
+      return res.status(400).json({ message: "Password does not match!" });
+
+    // 🎫 Generate new token
+    const token = jwt.sign(
+      {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        gender: user.gender,
+      },
+      process.env.SECRET_KEY,
+      { expiresIn: "1h" }
+    );
+
+    // 🍪 Set cookie
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 60 * 60 * 1000,
+      maxAge: 60 * 60 * 1000, // 1 hour
     });
 
-    res.status(200).json({ message: "Login successful!", login: { _id: user._id, email: user.email, token: token } });
+    // ✅ Save token to DB (IMPORTANT!)
+    user.token = token;
+    await user.save();
+
+    // ✅ Response
+    res.status(200).json({
+      message: "Login successful!",
+      login: {
+        _id: user._id,
+        email: user.email,
+        token: token,
+      },
+    });
   } catch (err) {
-    res.status(500).json({ message: "Internal Server Error :", err });
+    console.error("Login error:", err.message);
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: err.message,
+    });
   }
-}
+};
 
 const LogoutUser = (req, res) => {
   res.clearCookie("token", {

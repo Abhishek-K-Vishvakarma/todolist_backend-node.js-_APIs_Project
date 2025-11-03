@@ -11,7 +11,7 @@ routes.post("/verify", verifyEmail);
 routes.get("/getname", verifyToken, GetName);
 routes.put("/editname/:id", verifyToken, EditName);  
 routes.delete("/deletename/:id", verifyToken, DeleteName);
-routes.get("/users", GetAllUsers);
+routes.get("/users", verifyToken, GetAllUsers);
 routes.put("/resend/:id", otpUpdate);
 routes.post("/login", LoginUser);
 routes.delete("/deleteuser/:id", DelUsersById);
