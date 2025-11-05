@@ -7,7 +7,7 @@ import otpGenerate from "otp-generator";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import nodeMailer from "nodemailer";
-import upload from "../images_logo.js";
+// import upload from "../images_logo.js";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -474,46 +474,46 @@ const ResetPassword = async (req, res) => {
   }
 };
 
-const UploadFile = async (req, res) => {
-  try {
-    const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ message: "Email is required!" });
-    }
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: "User not found!" });
-    }
-    if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded!" });
-    }
-    const baseUrl = `${ req.protocol }://${ req.get("host") }`;
-    const imageUrl = `${ baseUrl }/uploads/${ req.file.filename }`;
-    const existingImage = await UserImage.findOne({ userId: user._id });
-    if (existingImage) {
-      existingImage.image_url = imageUrl;
-      await existingImage.save();
-      return res.status(200).json({
-        message: "Image updated successfully!",
-        data: existingImage,
-      });
-    }
-    const uploadedImage = await UserImage.create({
-      image_url: imageUrl,
-      userId: user._id,
-    });
-    res.status(201).json({
-      message: "File uploaded successfully!",
-      data: uploadedImage,
-    });
-  } catch (err) {
-    console.error("Upload Error:", err.message);
-    res.status(500).json({
-      message: "Internal Server Error",
-      error: err.message,
-    });
-  }
-};
+// const UploadFile = async (req, res) => {
+//   try {
+//     const { email } = req.body;
+//     if (!email) {
+//       return res.status(400).json({ message: "Email is required!" });
+//     }
+//     const user = await User.findOne({ email });
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found!" });
+//     }
+//     if (!req.file) {
+//       return res.status(400).json({ message: "No file uploaded!" });
+//     }
+//     const baseUrl = `${ req.protocol }://${ req.get("host") }`;
+//     const imageUrl = `${ baseUrl }/uploads/${ req.file.filename }`;
+//     const existingImage = await UserImage.findOne({ userId: user._id });
+//     if (existingImage) {
+//       existingImage.image_url = imageUrl;
+//       await existingImage.save();
+//       return res.status(200).json({
+//         message: "Image updated successfully!",
+//         data: existingImage,
+//       });
+//     }
+//     const uploadedImage = await UserImage.create({
+//       image_url: imageUrl,
+//       userId: user._id,
+//     });
+//     res.status(201).json({
+//       message: "File uploaded successfully!",
+//       data: uploadedImage,
+//     });
+//   } catch (err) {
+//     console.error("Upload Error:", err.message);
+//     res.status(500).json({
+//       message: "Internal Server Error",
+//       error: err.message,
+//     });
+//   }
+// };
 
 const GetUserImage = async (req, res) => {
   try {
@@ -574,6 +574,7 @@ const DeleteImages = async (req, res) => {
 export {
   AddName, GetName, EditName, DeleteName, Signup, verifyEmail,
   GetAllUsers, otpUpdate, LoginUser, DelUsersById, LogoutUser, EditUser,
-  ForgotPassword, ResetPassword, getTokenUser, UploadFile, GetUserImage,
-  DeleteImages
+  ForgotPassword, ResetPassword, getTokenUser, GetUserImage,
+  DeleteImages,
+  // UploadFile
 };

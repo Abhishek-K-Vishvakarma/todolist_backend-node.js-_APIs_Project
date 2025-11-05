@@ -1,9 +1,10 @@
 import { AddName, GetName, EditName, DeleteName, Signup, verifyEmail, 
   GetAllUsers, otpUpdate, LoginUser, DelUsersById, LogoutUser, EditUser,
-  ForgotPassword, ResetPassword, getTokenUser, UploadFile, GetUserImage,
+  ForgotPassword, ResetPassword, getTokenUser, GetUserImage,
   DeleteImages } from "../controllers/controller.js";
 import { verifyToken, getUserProfile }  from "../middleware/auth.js";
-import upload from "../images_logo.js";
+import { upload, UploadFile } from "../controllers/uploadController.js";
+// import upload from "../images_logo.js";
 import express from "express";
 const routes = express.Router();
 
@@ -23,6 +24,7 @@ routes.put("/edituser/:id", verifyToken, EditUser);
 routes.post("/forgot-password", ForgotPassword);
 routes.post("/reset-password/:token", ResetPassword);
 routes.get("/token", getTokenUser);
+// routes.post("/upload", upload.single("file"), UploadFile);
 routes.post("/upload", upload.single("file"), UploadFile);
 routes.get("/user-image/:userId", GetUserImage);
 routes.delete("/imagefile", DeleteImages)
